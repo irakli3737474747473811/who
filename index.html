@@ -1,359 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Party Animal Game</title>
-<meta name="description" content="A fun synced party game for friends!">
-<meta name="keywords" content="party game, friends, mobile game, sync">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Animal Game</title>
+  <meta name="description" content="A fun synced party game for friends!">
 
-<!-- React & ReactDOM -->
-<script src="https://resource.trickle.so/vendor_lib/unpkg/react@18/umd/react.production.min.js"></script>
-<script src="https://resource.trickle.so/vendor_lib/unpkg/react-dom@18/umd/react-dom.production.min.js"></script>
-<!-- Babel -->
-<script src="https://resource.trickle.so/vendor_lib/unpkg/@babel/standalone/babel.min.js"></script>
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Lucide Icons -->
-<link href="https://resource.trickle.so/vendor_lib/unpkg/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<style type="text/tailwindcss">
-@layer theme {
-    :root {
-        --primary-color: #FF6B6B;
-        --secondary-color: #4ECDC4;
-        --accent-yellow: #FFE66D;
-        --dark-purple: #292F36;
-    }
-}
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-@layer components {
+  <!-- Firebase (compat version) -->
+  <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.9.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* Custom Tailwind utilities */
     .glass-card {
-        @apply bg-white bg-opacity-20 backdrop-blur-lg border border-white border-opacity-30 shadow-xl rounded-3xl;
+      @apply bg-white bg-opacity-20 backdrop-blur-lg border border-white border-opacity-30 shadow-xl rounded-3xl;
     }
     .btn-bouncy {
-        @apply active:scale-95 transition-transform duration-150 ease-in-out font-bold uppercase tracking-wider;
+      @apply active:scale-95 transition-transform duration-150 ease-in-out font-bold uppercase tracking-wider;
     }
-}
-
-@layer utilities {
     .animate-float {
-        animation: float 6s ease-in-out infinite;
+      animation: float 6s ease-in-out infinite;
     }
     @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-        100% { transform: translateY(0px); }
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0px); }
     }
-    
     .animate-pop {
-        animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     @keyframes pop {
-        0% { transform: scale(0.8); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
-
     .bg-pattern {
-        background-color: #FFE53B;
-        background-image: linear-gradient(147deg, #FFE53B 0%, #FF2525 74%);
+      background-color: #FFE53B;
+      background-image: linear-gradient(147deg, #FFE53B 0%, #FF2525 74%);
     }
-}
-</style>
+  </style>
 </head>
-<body class="bg-pattern min-h-screen text-[var(--dark-purple)] overflow-hidden">
+<body class="bg-pattern min-h-screen text-white overflow-hidden">
+
 <div id="root"></div>
 
-<!-- Full App Script -->
-<script type="text/babel">
-// -------------------- Confetti --------------------
-const fireConfetti = () => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FFFFFF', '#FF006E'];
-    const confettiCount = 100;
-    const container = document.body;
+<script>
+  // --- Firebase Config ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyD-NNdZSUbWzL6qOBX47paNVbyoPQBQwWo",
+    authDomain: "party-animal-game-3a4d9.firebaseapp.com",
+    databaseURL: "https://party-animal-game-3a4d9-default-rtdb.firebaseio.com",
+    projectId: "party-animal-game-3a4d9",
+    storageBucket: "party-animal-game-3a4d9.appspot.com",
+    messagingSenderId: "245560929951",
+    appId: "1:245560929951:web:36fb18c763727a2ce2bcaa"
+  };
 
-    for (let i = 0; i < confettiCount; i++) {
-        const el = document.createElement('div');
-        el.style.position = 'fixed';
-        el.style.zIndex = '9999';
-        el.style.left = Math.random() * 100 + 'vw';
-        el.style.top = '-10px';
-        el.style.width = Math.random() * 10 + 5 + 'px';
-        el.style.height = Math.random() * 10 + 5 + 'px';
-        el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-        el.style.transform = `rotate(${Math.random() * 360}deg)`;
-        el.style.pointerEvents = 'none';
-        const duration = Math.random() * 3 + 2;
-        el.style.transition = `top ${duration}s linear, transform ${duration}s ease-in-out, opacity ${duration}s ease`;
-        container.appendChild(el);
-        requestAnimationFrame(() => {
-            el.style.top = '110vh';
-            el.style.transform = `rotate(${Math.random() * 360 + 360}deg) translateX(${Math.random() * 100 - 50}px)`;
-            el.style.opacity = '0';
-        });
-        setTimeout(() => el.remove(), duration * 1000);
-    }
-};
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-// -------------------- DB --------------------
-const GAME_STATE_TABLE = 'party_game_state';
-const CHARACTERS_TABLE = 'party_character';
-
-const DB = {
+  // --- DB functions ---
+  const DB = {
     async getCharacters() {
-        try {
-            const result = await trickleListObjects(CHARACTERS_TABLE, 100, true);
-            return result.items.map(item => ({
-                id: item.objectId,
-                ...item.objectData
-            }));
-        } catch (error) {
-            console.error("Error fetching characters:", error);
-            return [];
-        }
+      const snapshot = await database.ref('characters').get();
+      if (snapshot.exists()) {
+        return Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+      }
+      return [];
     },
     async getGameState() {
-        try {
-            const result = await trickleListObjects(GAME_STATE_TABLE, 1, true);
-            if (result.items.length > 0) {
-                return { id: result.items[0].objectId, ...result.items[0].objectData };
-            }
-            return null;
-        } catch (error) {
-            console.error("Error fetching game state:", error);
-            return null;
-        }
+      const snapshot = await database.ref('game_state').get();
+      return snapshot.exists() ? snapshot.val() : null;
     },
-    async initGameState(initialCharacterId) {
-        try {
-            const result = await trickleCreateObject(GAME_STATE_TABLE, {
-                current_character_id: initialCharacterId,
-                turn_start_time: Date.now()
-            });
-            return { id: result.objectId, ...result.objectData };
-        } catch (error) { console.error(error); throw error; }
-    },
-    async updateGameState(stateId, characterId) {
-        try {
-            await trickleUpdateObject(GAME_STATE_TABLE, stateId, {
-                current_character_id: characterId,
-                turn_start_time: Date.now()
-            });
-        } catch (error) { console.error(error); }
+    async updateGameState(characterId) {
+      await database.ref('game_state').set({
+        current_character_id: characterId,
+        turn_start_time: Date.now()
+      });
     }
-};
+  };
 
-// -------------------- Sparkles --------------------
-function Sparkles() {
-    const [sparkles, setSparkles] = React.useState([]);
-    React.useEffect(() => {
-        const newSparkles = Array.from({ length: 20 }).map((_, i) => ({
-            id: i,
-            left: Math.random() * 100,
-            top: Math.random() * 100,
-            size: Math.random() * 20 + 10,
-            delay: Math.random() * 5,
-            duration: Math.random() * 3 + 2
-        }));
-        setSparkles(newSparkles);
-    }, []);
-    return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-            {sparkles.map(s => (
-                <div key={s.id} className="absolute text-white opacity-40 animate-pulse"
-                    style={{ left:`${s.left}%`, top:`${s.top}%`, fontSize:`${s.size}px`, animationDelay:`${s.delay}s`, animationDuration:`${s.duration}s` }}>
-                    <div className="icon-sparkles"></div>
-                </div>
-            ))}
-        </div>
-    );
-}
+  // --- Confetti ---
+  function fireConfetti() {
+    const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FFFFFF', '#FF006E'];
+    for (let i = 0; i < 100; i++) {
+      const el = document.createElement('div');
+      el.style.position = 'fixed';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.top = '-10px';
+      el.style.width = Math.random() * 10 + 5 + 'px';
+      el.style.height = Math.random() * 10 + 5 + 'px';
+      el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      el.style.transition = `top ${Math.random() * 3 + 2}s linear, transform ${Math.random() * 3 + 2}s ease, opacity ${Math.random() * 3 + 2}s ease`;
+      document.body.appendChild(el);
+      requestAnimationFrame(() => {
+        el.style.top = '110vh';
+        el.style.transform = `rotate(${Math.random()*360}deg) translateX(${Math.random()*100-50}px)`;
+        el.style.opacity = '0';
+      });
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
 
-// -------------------- GameCard --------------------
-function GameCard({ character, isLoading }) {
+  // --- Components ---
+  const { useState, useEffect } = React;
+
+  function GameCard({ character, isLoading }) {
     if (!character) return null;
     return (
-        <div className="w-full max-w-sm mx-auto p-4 z-10 relative">
-            <div className={`glass-card p-6 flex flex-col items-center justify-center animate-float transition-all duration-500 ${isLoading ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}>
-                <div className="relative w-64 h-64 mb-6 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200">
-                    {isLoading ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <div className="icon-loader animate-spin text-4xl text-[var(--secondary-color)]"></div>
-                        </div>
-                    ) : (
-                        <img src={character.image_url || character.url} alt={character.name || character.description} className="w-full h-full object-cover animate-pop"/>
-                    )}
-                </div>
-                <h2 className="text-3xl font-black text-white drop-shadow-md text-center mb-2">
-                    {isLoading ? "Picking..." : character.name || character.description}
-                </h2>
-                <div className="flex items-center space-x-2 text-white/90">
-                    <div className="icon-star text-yellow-300 fill-current"></div>
-                    <span className="font-semibold uppercase tracking-widest text-sm">Current Player</span>
-                    <div className="icon-star text-yellow-300 fill-current"></div>
-                </div>
-            </div>
+      <div className="w-full max-w-sm mx-auto p-4 z-10 relative">
+        <div className={`glass-card p-6 flex flex-col items-center justify-center animate-float transition-all duration-500 ${isLoading ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}>
+          <div className="relative w-64 h-64 mb-6 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200">
+            {isLoading ? <div className="w-full h-full flex items-center justify-center">Loading...</div> :
+              <img src={character.image_url} alt={character.name} className="w-full h-full object-cover animate-pop" />}
+          </div>
+          <h2 className="text-3xl font-black text-white drop-shadow-md text-center mb-2">
+            {isLoading ? "Picking..." : character.name}
+          </h2>
+          <div className="flex items-center space-x-2 text-white/90">
+            <span className="font-semibold uppercase tracking-widest text-sm">Current Player</span>
+          </div>
         </div>
+      </div>
     );
-}
+  }
 
-// -------------------- Controls --------------------
-function Controls({ onNext, isUpdating, turnStartTime }) {
-    const [timeLeft, setTimeLeft] = React.useState(0);
-    React.useEffect(() => {
-        if (!turnStartTime) return;
-        const interval = setInterval(() => {
-            const now = Date.now();
-            const diff = Math.floor((now - turnStartTime) / 1000);
-            setTimeLeft(diff);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [turnStartTime]);
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2,'0')}`;
-    };
+  function Controls({ onNext, isUpdating }) {
     return (
-        <div className="fixed bottom-0 left-0 w-full p-6 pb-10 flex flex-col items-center z-20 bg-gradient-to-t from-black/20 to-transparent">
-            <div className="mb-6 bg-white/90 px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
-                <div className="icon-clock text-[var(--primary-color)]"></div>
-                <span className="font-mono font-bold text-xl text-gray-800">{formatTime(timeLeft)}</span>
-            </div>
-            <button onClick={onNext} disabled={isUpdating} className="btn-bouncy w-full max-w-xs bg-white text-[var(--primary-color)] text-xl py-4 rounded-full shadow-xl border-b-4 border-gray-200 hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group">
-                {isUpdating ? (
-                    <>
-                        <div className="icon-loader animate-spin"></div>
-                        <span>Spinning...</span>
-                    </>
-                ) : (
-                    <>
-                        <span>Next Player</span>
-                        <div className="icon-arrow-right group-hover:translate-x-1 transition-transform"></div>
-                    </>
-                )}
-            </button>
-        </div>
+      <div className="fixed bottom-0 left-0 w-full p-6 pb-10 flex flex-col items-center z-20 bg-gradient-to-t from-black/20 to-transparent">
+        <button
+          onClick={onNext}
+          disabled={isUpdating}
+          className="btn-bouncy w-full max-w-xs bg-white text-[var(--primary-color)] text-xl py-4 rounded-full shadow-xl border-b-4 border-gray-200 hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isUpdating ? "Spinning..." : "Next Player"}
+        </button>
+      </div>
     );
-}
+  }
 
-// -------------------- App --------------------
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError:false, error:null };
-    }
-    static getDerivedStateFromError(error) { return { hasError:true, error }; }
-    componentDidCatch(error, errorInfo) { console.error('ErrorBoundary caught an error:', error, errorInfo.componentStack); }
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h1>
-                        <p className="text-gray-600 mb-4">We're sorry, but something unexpected happened.</p>
-                        <button onClick={()=>window.location.reload()} className="bg-black text-white px-4 py-2 rounded">Reload Page</button>
-                    </div>
-                </div>
-            );
+  function Sparkles() {
+    const [sparkles, setSparkles] = useState([]);
+    useEffect(() => {
+      setSparkles(Array.from({ length: 20 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: Math.random() * 20 + 10,
+        delay: Math.random() * 5,
+        duration: Math.random() * 3 + 2
+      })));
+    }, []);
+    return (
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {sparkles.map(s => (
+          <div key={s.id} className="absolute text-white opacity-40 animate-pulse"
+               style={{ left: `${s.left}%`, top: `${s.top}%`, fontSize: `${s.size}px`, animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }}>
+          ✦
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function App() {
+    const [characters, setCharacters] = useState([]);
+    const [currentCharacter, setCurrentCharacter] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    // Load characters & game state
+    useEffect(() => {
+      async function load() {
+        const chars = await DB.getCharacters();
+        setCharacters(chars);
+        const state = await DB.getGameState();
+        if (state && chars.length > 0) {
+          const char = chars.find(c => c.id === state.current_character_id);
+          setCurrentCharacter(char);
         }
-        return this.props.children;
-    }
-}
+      }
+      load();
 
-function App() {
-    const [characters,setCharacters]=React.useState([]);
-    const [gameState,setGameState]=React.useState(null);
-    const [isUpdating,setIsUpdating]=React.useState(false);
-    const [currentCharacter,setCurrentCharacter]=React.useState(null);
-
-    React.useEffect(()=>{
-        const loadData=async()=>{
-            const chars=await DB.getCharacters();
-            setCharacters(chars);
-            let state=await DB.getGameState();
-            if(!state && chars.length>0){
-                const randomChar=chars[Math.floor(Math.random()*chars.length)];
-                state=await DB.initGameState(randomChar.id);
-            }
-            setGameState(state);
-        };
-        loadData();
-    },[]);
-
-    React.useEffect(()=>{
-        if(gameState && characters.length>0){
-            const char=characters.find(c=>c.id===gameState.current_character_id);
-            if(char){
-                if(currentCharacter && currentCharacter.id!==char.id) fireConfetti();
-                setCurrentCharacter(char);
-            }
+      // Listen to changes
+      database.ref('game_state').on('value', snapshot => {
+        const state = snapshot.val();
+        if (state) {
+          const char = characters.find(c => c.id === state.current_character_id);
+          if (char) setCurrentCharacter(char);
         }
-    },[gameState,characters]);
+      });
+    }, [characters]);
 
-    React.useEffect(()=>{
-        const interval=setInterval(async()=>{
-            if(!isUpdating){
-                const latestState=await DB.getGameState();
-                if(latestState){
-                    setGameState(prev=>{
-                        if(!prev||prev.turn_start_time!==latestState.turn_start_time) return latestState;
-                        return prev;
-                    });
-                }
-            }
-        },2000);
-        return ()=>clearInterval(interval);
-    },[isUpdating]);
+    const handleNextPlayer = async () => {
+      if (isUpdating || characters.length === 0) return;
+      setIsUpdating(true);
 
-    const handleNextPlayer=async()=>{
-        if(isUpdating||characters.length===0) return;
-        setIsUpdating(true);
-        try{
-            let nextChar;
-            if(characters.length>1 && currentCharacter){
-                const otherChars=characters.filter(c=>c.id!==currentCharacter.id);
-                nextChar=otherChars[Math.floor(Math.random()*otherChars.length)];
-            }else nextChar=characters[Math.floor(Math.random()*characters.length)];
-            if(gameState){
-                await DB.updateGameState(gameState.id,nextChar.id);
-                setGameState(prev=>({...prev,current_character_id:nextChar.id,turn_start_time:Date.now()}));
-                fireConfetti();
-            }
-        }catch(error){console.error(error);}
-        finally{setTimeout(()=>setIsUpdating(false),500);}
+      let nextChar;
+      if (characters.length > 1 && currentCharacter) {
+        const otherChars = characters.filter(c => c.id !== currentCharacter.id);
+        nextChar = otherChars[Math.floor(Math.random() * otherChars.length)];
+      } else {
+        nextChar = characters[Math.floor(Math.random() * characters.length)];
+      }
+
+      await DB.updateGameState(nextChar.id);
+      fireConfetti();
+      setIsUpdating(false);
     };
 
-    if(characters.length===0){
-        return (
-            <div className="min-h-screen flex items-center justify-center text-white">
-                <div className="text-center">
-                    <div className="icon-loader animate-spin text-4xl mb-4"></div>
-                    <p>Loading Party Animals...</p>
-                </div>
-            </div>
-        );
-    }
+    if (!currentCharacter) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
 
     return (
-        <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
-            <Sparkles />
-            <header className="absolute top-0 w-full p-6 text-center z-10">
-                <h1 className="text-4xl font-extrabold text-white tracking-tight drop-shadow-lg" style={{ fontFamily:'sans-serif' }}>
-                    Party <span className="text-[var(--accent-yellow)]">Time!</span>
-                </h1>
-            </header>
-            <main className="w-full flex-1 flex items-center justify-center">
-                <GameCard character={currentCharacter} isLoading={isUpdating}/>
-            </main>
-            <Controls onNext={handleNextPlayer} isUpdating={isUpdating} turnStartTime={gameState ? gameState.turn_start_time : null}/>
-        </div>
+      <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
+        <Sparkles />
+        <GameCard character={currentCharacter} isLoading={isUpdating} />
+        <Controls onNext={handleNextPlayer} isUpdating={isUpdating} />
+      </div>
     );
-}
+  }
 
-const root=ReactDOM.createRoot(document.getElementById('root'));
-root.render(<ErrorBoundary><App/></ErrorBoundary>);
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
